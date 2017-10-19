@@ -1,9 +1,3 @@
-window.onload = function() {
-  getBooks()
-  randomWord()
-}
-
-
 function randomWord(){
   const randWords = ["BOOKS!", "Books are the best!", "READ!", "How fun is reading...AMIRITE"]
   const getDiv = document.getElementById('interval-stuff')
@@ -18,39 +12,47 @@ function randomWord(){
 
 const bookResults = document.getElementById('book-result')
 
+function queryAPI(e) {
+  e.preventDefault()
+  bookResults.innerHTML = ""
+  const searchInputVal = document.getElementById('search-input').value
+  fetch(`https://www.googleapis.com/books/v1/volumes?q=${searchInputVal}`)
+  .then(res => res.json())
+  .then(json => displayBooks(json))
+}
+
 function getBooks() {
-  console.log('hello')
-  const searchBooks = document.getElementById('search-submit')
-  searchBooks.addEventListener('submit', (e) => {
-    e.preventDefault() //
-    bookResults.innerHTML = ""
-    const searchInput = document.getElementById('search-input').value
-    fetch(`https://www.googleapis.com/books/v1/volumes?q=${searchInput}`)
-    .then(res => res.json())
-    .then(json => displayBooks(json))
-  })
+  // console.log('hello')
+  const searchBooksButton = document.getElementById('search-submit')
+  searchBooksButton.addEventListener('submit', queryAPI)
 }
 
 function displayBooks(json){
   json.items.forEach(book => {
     const bookDiv = document.createElement('div')
-    let counter = 0
 
-    bookDiv.innerHTML = `<ul><li>Author: ${book.volumeInfo.authors[0]}</li>
-    <li>Title: ${book.volumeInfo.title}</li>
-    <li>Page Count: ${book.volumeInfo.pageCount}</li>
-    <li><img src="${book.volumeInfo.imageLinks.thumbnail}"></li></ul>`
+    bookDiv.innerHTML = `
+    <ul>
+      <li id="find-more-by-author">${book.volumeInfo.authors[0]}
+        <button type="button" id="button-test">More By Author</button>
+      </li>
+      <li>Title: ${book.volumeInfo.title}</li>
+      <li>Page Count: ${book.volumeInfo.pageCount}</li>
+      <li>
+        <img src="${book.volumeInfo.imageLinks.thumbnail}">
+      </li>
+    </ul>`
 
     const likeButton = document.createElement('button')
     const numOfLikes = document.createElement('h2')
     likeButton.innerText = "LIKE ME"
-    numOfLikes.innerHTML = counter
+    numOfLikes.innerHTML = 0
 
     bookDiv.appendChild(likeButton)
     bookDiv.appendChild(numOfLikes)
 
     likeButton.addEventListener('click', function(event){
-      numOfLikes.innerHTML = ++counter
+      numOfLikes.innerHTML = ++numOfLikes.innerHTML
     })
 
     let commentForm = document.createElement('form')
@@ -74,11 +76,22 @@ function displayBooks(json){
       commentHandler.value = ''
     })
 
-
-
-
-
     bookResults.appendChild(bookDiv)
+
+    const moreByAuthor = document.getElementById("button-test")
+    moreByAuthor.addEventListener('click', e => {
+      e.preventDefault()
+      const clicked = event.target
+      fetch(`https://www.googleapis.com/books/v1/volumes?q=${clicked.parentElement.firstChild}`)
+      .then(res => res.json())
+      .then(json => console.log(json))
+    })
   })
 
+}
+
+
+window.onload = function() {
+  getBooks()
+  randomWord()
 }
